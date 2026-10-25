@@ -1,0 +1,80 @@
+<idea-plugin>
+    <id>io.github.nagatatz.haskellmodern</id>
+    <name>Haskell Modern</name>
+    <vendor url="https://github.com/Nagatatz">Nagatatz</vendor>
+    <resource-bundle>messages.HaskellBundle</resource-bundle>
+
+    <description><![CDATA[
+    <p>Modern Haskell support for IntelliJ-based IDEs, in the spirit of the archived IntelliJ-Haskell plugin,
+    rebuilt on <b>Haskell Language Server</b> (via the IntelliJ Platform LSP API), <b>cabal</b> and <b>Hoogle</b>.</p>
+    <ul>
+      <li>Haskell (<code>.hs</code>, <code>.hs-boot</code>, <code>.hsig</code>, <code>.hsc</code>) and Cabal file types,
+          fast lexer-based highlighting, commenter, brace matching</li>
+      <li>HLS: diagnostics, completion, go to definition, references, rename, code actions, formatting
+          (ormolu / fourmolu / stylish-haskell), hlint, semantic highlighting, inlay hints</li>
+      <li>HLS auto-detection from PATH or ghcup, works in WSL / Dev Containers</li>
+      <li>Hoogle tool window and <i>Search Hoogle</i> action (Alt+Shift+H); hoogle.haskell.org, a local
+          <code>hoogle server</code> or the <code>hoogle</code> CLI</li>
+      <li>Quick Documentation from HLS, with Hoogle / Hackage fallback</li>
+    </ul>
+    ]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.lsp</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- Haskell -->
+        <fileType name="Haskell" language="Haskell" implementationClass="io.github.nagatatz.haskellmodern.lang.HaskellFileType"
+                  fieldName="INSTANCE" extensions="hs;hs-boot;hsig;hsc"/>
+        <lang.parserDefinition language="Haskell" implementationClass="io.github.nagatatz.haskellmodern.lang.HaskellParserDefinition"/>
+        <lang.syntaxHighlighterFactory language="Haskell" implementationClass="io.github.nagatatz.haskellmodern.lang.HaskellSyntaxHighlighterFactory"/>
+        <lang.commenter language="Haskell" implementationClass="io.github.nagatatz.haskellmodern.lang.HaskellCommenter"/>
+        <lang.braceMatcher language="Haskell" implementationClass="io.github.nagatatz.haskellmodern.lang.HaskellBraceMatcher"/>
+        <lang.quoteHandler language="Haskell" implementationClass="io.github.nagatatz.haskellmodern.lang.HaskellQuoteHandler"/>
+        <colorSettingsPage implementation="io.github.nagatatz.haskellmodern.lang.HaskellColorSettingsPage"/>
+
+        <!-- Cabal -->
+        <fileType name="Cabal" language="Cabal" implementationClass="io.github.nagatatz.haskellmodern.cabal.CabalFileType"
+                  fieldName="INSTANCE" extensions="cabal"
+                  fileNames="cabal.project;cabal.project.local;cabal.project.freeze"/>
+        <lang.parserDefinition language="Cabal" implementationClass="io.github.nagatatz.haskellmodern.cabal.CabalParserDefinition"/>
+        <lang.syntaxHighlighterFactory language="Cabal" implementationClass="io.github.nagatatz.haskellmodern.cabal.CabalSyntaxHighlighterFactory"/>
+        <lang.commenter language="Cabal" implementationClass="io.github.nagatatz.haskellmodern.cabal.CabalCommenter"/>
+
+        <!-- Settings -->
+        <applicationConfigurable parentId="language" id="haskell.modern.settings" displayName="Haskell"
+                                 instance="io.github.nagatatz.haskellmodern.settings.HaskellSettingsConfigurable"/>
+
+        <!-- Documentation (HLS hover + Hoogle fallback) -->
+        <platform.backend.documentation.targetProvider order="first"
+                implementation="io.github.nagatatz.haskellmodern.lsp.HaskellDocumentationTargetProvider"/>
+
+        <!-- Hoogle -->
+        <toolWindow id="Hoogle" anchor="right" secondary="true" icon="/icons/haskell.svg"
+                    factoryClass="io.github.nagatatz.haskellmodern.hoogle.HoogleToolWindowFactory"/>
+
+        <notificationGroup id="Haskell" displayType="BALLOON"/>
+    </extensions>
+
+    <extensions defaultExtensionNs="com.intellij.platform.lsp">
+        <integrationProvider implementation="io.github.nagatatz.haskellmodern.lsp.HlsIntegrationProvider"/>
+    </extensions>
+
+    <applicationListeners>
+        <listener class="io.github.nagatatz.haskellmodern.lsp.HlsSettingsListener"
+                  topic="io.github.nagatatz.haskellmodern.settings.HaskellSettingsListener"/>
+    </applicationListeners>
+
+    <actions>
+        <action id="Haskell.SearchHoogle" class="io.github.nagatatz.haskellmodern.hoogle.SearchHoogleAction"
+                icon="/icons/haskell.svg">
+            <keyboard-shortcut keymap="$default" first-keystroke="alt shift H"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="alt shift H" replace-all="true"/>
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
+        <action id="Haskell.RestartHls" class="io.github.nagatatz.haskellmodern.lsp.RestartHlsAction">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
+    </actions>
+</idea-plugin>
